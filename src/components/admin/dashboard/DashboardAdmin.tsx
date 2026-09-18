@@ -56,27 +56,48 @@ interface Absensi {
   foto?: string;
   selfie_masuk?: string;
 }
-type MenuKey = 
+type MenuKey =
   | 'overview' | 'employees' | 'employee-360' | 'employee-add' | 'id-card' | 'organization' | 'hr-operations'
   | 'attendance' | 'attendance-today' | 'late' | 'leave' | 'overtime' | 'selfie'
   | 'schedule' | 'shift' | 'holiday' | 'leave-request' | 'leave-balance' | 'approvals'
-  {
-  title: 'PAYROLL',
-  items: [
-    ['payroll', 'Monthly Payroll', 'payroll'],
-    ['production-hr', 'HR Transaction Center', 'settings'],
-    ['payroll-engine', 'Payroll Calculation', 'payroll'],
-    ['payroll-production-v22', 'Payroll Control', 'payroll'],
-    ['payroll-components', 'Salary Components', 'components'],
-    ['payroll-overtime', 'Overtime Payroll', 'arrow'],
-    ['payslip', 'Payslip', 'calendar']
-  ]
-},  | 'performance' | 'kpi' | 'recruitment-v25' | 'recruitment' | 'candidates'
+  | 'payroll' | 'production-hr' | 'payroll-engine' | 'payroll-production-v22' | 'payroll-components' | 'payroll-overtime' | 'payslip'
+  | 'performance' | 'kpi' | 'recruitment-v25' | 'recruitment' | 'candidates'
   | 'reports' | 'settings' | 'roles' | 'audit' | 'notifications' | 'system-health'
   | 'professional-suite' | 'enterprise-v20' | 'security-v21' | 'payroll-indonesia-v23'
   | `enterprise-v${26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35}`;
-const isoToday=()=>new Date().toISOString().slice(0,10);
-const menuGroups: {title:string;items: readonly [MenuKey,string,string][]}[] = [
+
+const isoToday = () => new Date().toISOString().slice(0, 10);
+
+const menuGroups: { title: string; items: readonly [MenuKey, string, string][] }[] = [
+  {
+    title: 'UTAMA',
+    items: [
+      ['overview', 'Overview', 'home'],
+      ['professional-suite', 'Professional Suite', 'kpi']
+    ]
+  },
+  {
+    title: 'PEOPLE',
+    items: [
+      ['employees', 'Semua Karyawan', 'users'],
+      ['id-card', 'ID Card', 'card'],
+      ['employee-360', 'Employee 360', 'users']
+    ]
+  },
+  {
+    title: 'PAYROLL',
+    items: [
+      ['payroll', 'Monthly Payroll', 'payroll'],
+      ['production-hr', 'HR Transaction Center', 'settings'],
+      ['payroll-engine', 'Payroll Calculation', 'payroll'],
+      ['payroll-production-v22', 'Payroll Control', 'payroll'],
+      ['payroll-components', 'Salary Components', 'components'],
+      ['payroll-overtime', 'Overtime Payroll', 'arrow'],
+      ['payslip', 'Payslip', 'calendar']
+    ]
+  },
+  // ... bagian menu groups lainnya ...
+] as const menuGroups: {title:string;items: readonly [MenuKey,string,string][]}[] = [
  {title:'UTAMA',items:[['overview','Overview','home'],['professional-suite','Professional Suite','kpi']]},
  {title:'PEOPLE',items:[['employees','Semua Karyawan','users'],['id-card','ID Card','card'],['employee-360','Employee 360°','users'],['employee-add','Tambah Karyawan','plus'],['organization','Organisasi','org'],['hr-operations','HR Operations','settings']]},
  {title:'ATTENDANCE',items:[['attendance','Rekap Absensi','clock'],['attendance-today','Absensi Hari Ini','check'],['late','Keterlambatan','alert'],['leave','Izin & Sakit','leave'],['overtime','Lembur','arrow'],['selfie','Monitoring Selfie','camera']]},
