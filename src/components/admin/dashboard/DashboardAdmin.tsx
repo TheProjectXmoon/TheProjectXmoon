@@ -68,7 +68,7 @@ type MenuKey =
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 
-const menuGroups: { title: string; items: readonly [MenuKey, string, string][] }[] = [
+const menuGroups = [
   {
     title: 'UTAMA',
     items: [
@@ -81,7 +81,36 @@ const menuGroups: { title: string; items: readonly [MenuKey, string, string][] }
     items: [
       ['employees', 'Semua Karyawan', 'users'],
       ['id-card', 'ID Card', 'card'],
-      ['employee-360', 'Employee 360', 'users']
+      ['employee-360', 'Employee 360°', 'users'],
+      ['employee-add', 'Tambah Karyawan', 'plus'],
+      ['organization', 'Organisasi', 'org'],
+      ['hr-operations', 'HR Operations', 'settings']
+    ]
+  },
+  {
+    title: 'ATTENDANCE',
+    items: [
+      ['attendance', 'Rekap Absensi', 'clock'],
+      ['attendance-today', 'Absensi Hari Ini', 'check'],
+      ['late', 'Keterlambatan', 'alert'],
+      ['leave', 'Izin & Sakit', 'leave'],
+      ['overtime', 'Lembur', 'arrow'],
+      ['selfie', 'Monitoring Selfie', 'camera']
+    ]
+  },
+  {
+    title: 'SCHEDULE',
+    items: [
+      ['schedule', 'Jadwal Kerja', 'calendar'],
+      ['shift', 'Shift', 'shift'],
+      ['holiday', 'Hari Libur', 'holiday']
+    ]
+  },
+  {
+    title: 'LEAVE',
+    items: [
+      ['leave-request', 'Pengajuan Cuti', 'request'],
+      ['leave-balance', 'Saldo Cuti', 'balance']
     ]
   },
   {
@@ -96,20 +125,52 @@ const menuGroups: { title: string; items: readonly [MenuKey, string, string][] }
       ['payslip', 'Payslip', 'calendar']
     ]
   },
-  // ... bagian menu groups lainnya ...
-] as const menuGroups: {title:string;items: readonly [MenuKey,string,string][]}[] = [
- {title:'UTAMA',items:[['overview','Overview','home'],['professional-suite','Professional Suite','kpi']]},
- {title:'PEOPLE',items:[['employees','Semua Karyawan','users'],['id-card','ID Card','card'],['employee-360','Employee 360°','users'],['employee-add','Tambah Karyawan','plus'],['organization','Organisasi','org'],['hr-operations','HR Operations','settings']]},
- {title:'ATTENDANCE',items:[['attendance','Rekap Absensi','clock'],['attendance-today','Absensi Hari Ini','check'],['late','Keterlambatan','alert'],['leave','Izin & Sakit','leave'],['overtime','Lembur','arrow'],['selfie','Monitoring Selfie','camera']]},
- {title:'SCHEDULE',items:[['schedule','Jadwal Kerja','calendar'],['shift','Shift','shift'],['holiday','Hari Libur','holiday']]},
- {title:'LEAVE',items:[['leave-request','Pengajuan Cuti','request'],['leave-balance','Saldo Cuti','balance']]},
- {title:'PAYROLL',items:[['payroll','Payroll Bulanan','payroll'],['production-hr','HR Transaction Center','settings'],['payroll-engine','Payroll Engine V9','payroll'],['payroll-production-v22','Payroll Production V22','payroll'],['payroll-components','Komponen Gaji','components'],['payroll-overtime','Payroll Lembur','arrow'],['payslip','Slip Gaji','calendar']]},
- {title:'TALENT',items:[['performance','Performance','arrow'],['kpi','KPI & Target','kpi'],['recruitment-v25','Recruitment ATS Enterprise','recruitment'],['recruitment','Recruitment Legacy','recruitment'],['candidates','Kandidat','users']]},
- {title:'ENTERPRISE SUITE',items:[['enterprise-v26','Documents & Compliance','request'],['enterprise-v27','Performance & KPI','kpi'],['enterprise-v28','HR Analytics & BI','kpi'],['enterprise-v29','HR Inbox','bell'],['enterprise-v30','ESS Enterprise','users'],['enterprise-v31','QA & Testing','check'],['enterprise-v32','Production Optimization','settings'],['enterprise-v33','Multi-Company','org'],['enterprise-v34','API & Integrations','settings'],['enterprise-v35','AI HR & Automation','kpi']]},
- {title:'REPORTING',items:[['reports','Laporan','report']]},
- {title:'SYSTEM',items:[['enterprise-v20','Enterprise Command Center','org'],['payroll-indonesia-v23','Payroll Indonesia Compliance','payroll'],['security-v21','Security Center','health'],['approvals','Pusat Persetujuan','check'],['notifications','Notifikasi','bell'],['system-health','System Health','health'],['settings','Pengaturan','settings'],['roles','Role & Permission','users'],['audit','Audit Log','request']]}
+  {
+    title: 'TALENT',
+    items: [
+      ['performance', 'Performance', 'arrow'],
+      ['kpi', 'KPI & Target', 'kpi'],
+      ['recruitment-v25', 'Recruitment ATS Enterprise', 'recruitment'],
+      ['recruitment', 'Recruitment Legacy', 'recruitment'],
+      ['candidates', 'Kandidat', 'users']
+    ]
+  },
+  {
+    title: 'ENTERPRISE SUITE',
+    items: [
+      ['enterprise-v26', 'Documents & Compliance', 'request'],
+      ['enterprise-v27', 'Performance & KPI', 'kpi'],
+      ['enterprise-v28', 'HR Analytics & BI', 'kpi'],
+      ['enterprise-v29', 'HR Inbox', 'bell'],
+      ['enterprise-v30', 'ESS Enterprise', 'users'],
+      ['enterprise-v31', 'QA & Testing', 'check'],
+      ['enterprise-v32', 'Production Optimization', 'settings'],
+      ['enterprise-v33', 'Multi-Company', 'org'],
+      ['enterprise-v34', 'API & Integrations', 'settings'],
+      ['enterprise-v35', 'AI HR & Automation', 'kpi']
+    ]
+  },
+  {
+    title: 'REPORTING',
+    items: [
+      ['reports', 'Laporan', 'report']
+    ]
+  },
+  {
+    title: 'SYSTEM',
+    items: [
+      ['enterprise-v20', 'Enterprise Command Center', 'org'],
+      ['payroll-indonesia-v23', 'Payroll Indonesia Compliance', 'payroll'],
+      ['security-v21', 'Security Center', 'health'],
+      ['approvals', 'Pusat Persetujuan', 'check'],
+      ['notifications', 'Notifikasi', 'bell'],
+      ['system-health', 'System Health', 'health'],
+      ['settings', 'Pengaturan', 'settings'],
+      ['roles', 'Role & Permission', 'users'],
+      ['audit', 'Audit Log', 'request']
+    ]
+  }
 ] as const;
-
 const rolePermissions: Record<string,string[]> = {'Super Admin':['*'],'Admin':['people','attendance','schedule','leave','payroll','talent','reports','system'],'HRD':['people','attendance','schedule','leave','talent','reports'],'Payroll':['people.read','attendance.read','payroll','reports.payroll'],'Supervisor':['people.read','attendance.read','schedule.read','leave.read','leave.approve','reports.attendance'],'Karyawan':[]};
 const menuGroup=(key:MenuKey)=>['professional-suite'].includes(key)?'system':['employees','id-card','employee-360','employee-add','organization'].includes(key)?'people':['attendance','attendance-today','late','leave','overtime','selfie'].includes(key)?'attendance':['schedule','shift','holiday'].includes(key)?'schedule':['leave-request','leave-balance','approvals'].includes(key)?'leave':['payroll','payroll-components','payroll-overtime','payslip','production-hr','payroll-engine','payroll-production-v22'].includes(key)?'payroll':['performance','kpi'].includes(key)?'talent':['recruitment','candidates','recruitment-v25'].includes(key)?'recruitment':['enterprise-v26','enterprise-v27','enterprise-v28','enterprise-v29','enterprise-v30','enterprise-v31','enterprise-v32','enterprise-v33','enterprise-v34','enterprise-v35'].includes(key)?'system':key==='reports'?'reports':key==='settings'?'settings':key==='roles'?'roles':key==='audit'?'audit':key==='notifications'?'notifications':key==='system-health'?'system':(key==='enterprise-v26'||key==='payroll-indonesia-v23')||key==='security-v21'?'system':'overview';
 const requiredPermission=(key:MenuKey)=>{if(key==='professional-suite')return 'system.health';if(key==='hr-operations')return 'people.read';if(key==='production-hr'||key==='payroll-engine'||key==='payroll-production-v22')return 'payroll.read';const g=menuGroup(key); if(key==='employee-add')return 'people.write'; if(key==='roles')return 'roles.read'; if(key==='settings')return 'settings.write'; if(key==='audit')return 'audit.read'; if(key==='approvals')return 'approval.read'; if(key==='notifications')return 'notifications.read'; if(key==='system-health')return 'system.health';if((key==='enterprise-v26'||key==='payroll-indonesia-v23'))return 'system.health'; if(key==='security-v21')return 'security.read'; if(key.startsWith('enterprise-v')) return 'system.health'; if(key==='overtime')return 'overtime.read'; if(key==='reports')return 'reports.read'; if(g==='recruitment')return 'recruitment.read'; if(g==='talent')return 'talent.read'; return g==='overview'?'':`${g}.read`;};
