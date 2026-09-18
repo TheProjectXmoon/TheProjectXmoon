@@ -79,14 +79,9 @@ function Icon({name}:{name:string}){
 }
 
 export default function DashboardAdmin() {
-  const { lang, setLang, t } = useTranslation(); // 't' sekarang dipakai di bawah
+  const { lang, setLang, t } = useTranslation();
 
-  // Tambahkan garis bawah (_open) jika belum dipakai di tampilan, atau biarkan jika mau dipakai
-  const [_open, _setOpen] = useState<Record<string, boolean>>(
-    Object.fromEntries(menuGroupsData?.map(g => [g.title, true]) || [])
-  );
-
-  // menuGroups yang menggunakan fungsi t(...) agar bahasanya ikut berubah & 't' terbaca
+  // 1. DEFINISIKAN menuGroups TERLEBIH DAHULU di atas
   const menuGroups = [
     {
       title: 'UTAMA',
@@ -99,7 +94,7 @@ export default function DashboardAdmin() {
       title: 'PEOPLE',
       items: [
         ['employees', t('employees') || 'Semua Karyawan', 'users'],
-        ['id-card', 'ID Card', 'card'], // Tetap statis sesuai aturan ID card
+        ['id-card', 'ID Card', 'card'], // Tetap statis sesuai aturan ID Card
         ['employee-360', 'Employee 360°', 'users'],
         ['employee-add', t('add_employee') || 'Tambah Karyawan', 'plus'],
         ['organization', 'Organisasi', 'org'],
@@ -175,6 +170,11 @@ export default function DashboardAdmin() {
       ]
     }
   ];
+  const [_open, _setOpen] = useState<Record<string, boolean>>(
+    Object.fromEntries(menuGroups.map(g => [g.title, true]))
+  );
+
+  // ... sisa kode komponen selanjutnya ...
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
