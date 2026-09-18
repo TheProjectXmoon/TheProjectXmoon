@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Suggestion } from './types';
 
 export default function SuperAdminSuggestionInbox({
