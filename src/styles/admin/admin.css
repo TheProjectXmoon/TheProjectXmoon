@@ -777,21 +777,25 @@
 
 /* Theme-aware admin controls */
 
-.talenta-main .primary{
-  background:var(--mx-primary)!important;
-  border-color:var(--mx-accent)!important;
-  color:#fff!important;
+.talenta-main .primary {
+  background: #101a33 !important;
+  color: #ffffff !important;
+  border: 1px solid #101a33 !important;
+}
+.talenta-main .primary:hover {
+  background: #182442 !important;
+  color: #ffffff !important;
 }
 
-.talenta-main .primary:hover{
-  background:var(--mx-primary)!important;
-  border-color:var(--mx-accent)!important;
+.talenta-main .secondary {
+  background: #ffffff !important;
+  color: #344054 !important;
+  border: 1px solid #cbd2dc !important;
 }
 
-.talenta-main .secondary{
-  background:var(--mx-surface)!important;
-  border-color:var(--mx-border)!important;
-  color:var(--mx-text)!important;
+.talenta-main .secondary:hover {
+  background: #f8fafc !important;
+  border-color: #98a2b3 !important;
 }
 
 .talenta-shell{
@@ -913,10 +917,10 @@
 .table-panel,
 .form-panel,
 .report-card {
-  background: var(--mx-surface) !important;
-  border-color: var(--mx-border) !important;
+  background: #ffffff !important;
+  color: #172033 !important;
+  border: 1px solid #e2e7ee !important;
 }
-
 /* Headings */
 
 .page-heading h1,
@@ -969,18 +973,16 @@ button.secondary,
   color: #ffffff !important;
 }
 
-.talenta-sidebar .nav-item:hover,
-.talenta-sidebar .nav-item.active {
-  background: color-mix(
-    in srgb,
-    var(--mx-accent) 18%,
-    transparent
-  ) !important;
-
-  color: var(--mx-accent) !important;
-  border-color: var(--mx-accent) !important;
+.talenta-sidebar .nav-item:hover {
+  background: rgba(255, 255, 255, 0.08) !important;
+  color: #ffffff !important;
 }
 
+.talenta-sidebar .nav-item.active {
+  background: rgba(214, 174, 88, 0.16) !important;
+  color: #ffffff !important;
+  border-color: transparent !important;
+}
 /* Tabs */
 
 .settings-tabs button,
@@ -1080,19 +1082,15 @@ a,
 /* Table */
 
 table thead th {
-  background: color-mix(
-    in srgb,
-    var(--mx-primary) 7%,
-    var(--mx-surface)
-  ) !important;
-
-  color: var(--mx-text) !important;
+  background: #f8fafc !important;
+  color: #344054 !important;
+  border-bottom: 1px solid #e2e7ee !important;
 }
 
 table td {
-  border-color: var(--mx-border) !important;
+  color: #344054 !important;
+  border-bottom: 1px solid #e2e7ee !important;
 }
-
 /* Status / accent */
 
 .status-badge,
@@ -1337,15 +1335,25 @@ table td {
 }
 .talenta-main td{color:#344054 !important;}
 .talenta-main th{color:#475467 !important;background:#f8fafc !important;}
-.talenta-main input,.talenta-main select,.talenta-main textarea{
-  background:#ffffff !important;
-  color:#172033 !important;
+.talenta-main input,
+.talenta-main select,
+.talenta-main textarea {
+  background: #ffffff !important;
+  color: #172033 !important;
+  border: 1px solid #cbd2dc !important;
 }
-.talenta-main input::placeholder,.talenta-main textarea::placeholder{color:#98a2b3 !important;}
-.talenta-main .link-btn{color:#174ea6 !important;}
-.talenta-main .quick-action{color:#344054 !important;}
-.talenta-main .eyebrow{color:#8a6b16 !important;}
 
+.talenta-main input::placeholder,
+.talenta-main textarea::placeholder {
+  color: #98a2b3 !important;
+}
+
+.talenta-main input:focus,
+.talenta-main select:focus,
+.talenta-main textarea:focus {
+  border-color: #d6ae58 !important;
+  box-shadow: 0 0 0 3px rgba(214, 174, 88, 0.15) !important;
+}
 /* Prevent theme variables from ever becoming self-referential. */
 :root {
   --mx-primary: #101a33;
