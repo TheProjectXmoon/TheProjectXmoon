@@ -81,7 +81,7 @@ function Icon({name}:{name:string}){
 export default function DashboardAdmin() {
   const { lang, setLang, t } = useTranslation();
 
-  // 1. DEFINISIKAN menuGroups TERLEBIH DAHULU di atas
+  // 1. DEFINISIKAN menuGroups DI DALAM KOMPONEN (Mendukung terjemahan t(...))
   const menuGroups = [
     {
       title: 'UTAMA',
@@ -170,7 +170,318 @@ export default function DashboardAdmin() {
       ]
     }
   ];
- const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
+
+  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
+  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
+  const [employees,setEmployees]=useState<Karyawan[]>([]),[attendance,setAttendance]=useState<Absensi[]>([]);
+  const [search,setSearch]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState(''),[toast,setToast]=useState('');
+  const [editing,setEditing]=useState<Karyawan|null>(null),[userRole,setUserRole]=useState('');
+  const [dbPerms,setDbPerms]=useState<string[]>([]);
+  const [sessionChecking,setSessionChecking]=useState(true);
+
+  useEffect(()=>{
+    let active=true;
+    const loadSession=async()=>{
+      setSessionChecking(true);
+      if(!isSupabaseConfigured){setError('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY pada environment deployment.');setSessionChecking(false);return;}
+      const {data}=await supabase.auth.getUser();
+      if(!active)return;
+      if(data.user?.email){
+        const {data:p}=await supabase.from('hris_users').select('role,status').eq('email',data.user.email).maybeSingle();
+        if(active&&p?.status==='Aktif'){
+          setUserRole(p.role||'');
+          const {data:rp}=await supabase.from('hris_role_permissions').select('permission_code').eq('role_name',p.role);
+          if(active){setDbPerms((rp||[]).map(x=>x.permission_code));setEmail(data.user.email);setLogged(true);}
+        } else if(active) { await supabase.auth.signOut(); setLogged(false); }
+      }
+      if(active)setSessionChecking(false);
+    };
+    loadSession();
+    if(!isSupabaseConfigured)return()=>{active=false};
+    const {data:listener}=supabase.auth.onAuthStateChange((event,session)=>{
+      if(event==='SIGNED_OUT' || !session){setLogged(false);setUserRole('');setDbPerms([]);setSessionChecking(false);}
+    });
+    return()=>{active=false;listener.subscription.unsubscribe()};
+  },[]);
+
+  useEffect(()=>{if(logged)refresh()},[logged]);
+
+  useEffect(()=>{
+    const read=()=>{
+      const candidate=location.hash.replace('#/','') as MenuKey;
+      if(candidate&&menuGroups.flatMap(g=>g.items).some(x=>x[0]===candidate)&&menuPermissionForRole(candidate,userRole,dbPerms))setMenu(candidate)
+    };
+    read();
+    window.addEventListener('hashchange',read);
+    return()=>window.removeEventListener('hashchange',read)
+  },[userRole,dbPerms]);
+
+  const navigate=(next:MenuKey)=>{setMenu(next);location.hash=`/${next}`;if(window.innerWidth<900)setSidebar(false)};
+
+  async function confirmEmployeeEmail(employee: Karyawan) {
+    if (!employee.email) {
+      setError('Karyawan belum memiliki email.');
+      return;
+    }
+    const confirmed = window.confirm(
+      `Aktifkan akun karyawan?\n\nNama: ${employee.nama}\nID: ${employee.id_karyawan || '-'}\nEmail: ${employee.email}\n\nJika akun belum ada, sistem akan otomatis membuat akun Supabase Auth.`
+    );
+    if (!confirmed) return;
+    try {
+      setError('');
+      setLoading(true);
+      const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError) throw sessionError;
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) throw new Error('Sesi login HR/Admin tidak ditemukan. Silakan login ulang.');
+
+      const response = await fetch('/.netlify/functions/confirm-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${accessToken}`,
+        },
+        body: JSON.stringify({ employee_id: employee.id }),
+      });
+
+      let result: any = {};
+      try { result = await response.json(); } catch { result = {}; }
+
+      if (!response.ok) throw new Error(result.error || result.message || 'Gagal membuat akun karyawan.');
+
+      if (result.success && result.account_created && result.temporary_password) {
+        window.alert(
+          `AKUN KARYAWAN BERHASIL DIBUAT\n\nNama: ${result.nama || employee.nama}\nEmail: ${result.email || employee.email}\n\nPASSWORD SEMENTARA:\n${result.temporary_password}\n\nBerikan email dan password ini kepada karyawan.`
+        );
+      } else {
+        window.alert(result.message || `Akun ${employee.nama} berhasil diaktifkan.`);
+      }
+      setToast(result.message || 'Akun karyawan berhasil diaktifkan.');
+      await refresh();
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Gagal membuat akun karyawan.';
+      setError(message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function refresh(){
+    setLoading(true); setError('');
+    const [k,a]=await Promise.all([
+      supabase.from('karyawan').select('*').order('nama'),
+      supabase.from('absensi').select('*').order('created_at',{ascending:false}).limit(2000)
+    ]);
+    if(k.error)setError(`Karyawan: ${k.error.message}`); else setEmployees(k.data||[]);
+    if(a.error)setError(v=>v?`${v}\nAbsensi: ${a.error.message}`:`Absensi: ${a.error.message}`); else setAttendance(a.data||[]);
+    setLoading(false);
+  }
+
+  async function login(e:FormEvent){
+    e.preventDefault(); setError('');
+    if(!isSupabaseConfigured){setError('Supabase belum dikonfigurasi. Isi VITE_SUPABASE_URL dan VITE_SUPABASE_ANON_KEY pada environment deployment.');return}
+    setLoading(true);
+    const {data,error:e2}=await signIn(email,pin);
+    setLoading(false);
+    if(e2 || !data.user){ setError(e2?.message || 'Email atau password tidak valid.'); return; }
+    const {data:profile,error:pe}=await supabase.from('hris_users').select('role,status').ilike('email',data.user.email||'').maybeSingle();
+    if(pe){ await signOut(); setError('Profil akses HR tidak dapat diverifikasi. Coba lagi atau hubungi administrator.'); return; }
+    if(!profile || profile.status!=='Aktif'){
+      await signOut(); setError('Akun tidak memiliki akses Dashboard HR.'); return;
+    }
+    setUserRole(profile.role);
+    const {data:rp}=await supabase.from('hris_role_permissions').select('permission_code').eq('role_name',profile.role);
+    setDbPerms((rp||[]).map(x=>x.permission_code));
+    setLogged(true);
+  }
+
+  async function removeEmployee(k:Karyawan){
+    if(!menuPermissionForRole('employees',userRole,dbPerms) || !canDelete(dbPerms,'people',userRole)){setError('Anda tidak memiliki permission people.delete.');return}
+    if(!confirm(`Hapus ${k.nama}?`))return;
+    const {error:e}=await supabase.from('karyawan').delete().eq('id',k.id);
+    if(e)setError(e.message);else{setToast('Karyawan dihapus.');refresh()}
+  }
+
+  async function saveEdit(payload:Record<string,unknown>){
+    if(!canWrite(dbPerms,'people',userRole)){setError('Anda tidak memiliki permission people.write.');return}
+    if(!editing)return;
+    const {error:e}=await supabase.from('karyawan').update(payload).eq('id',editing.id);
+    if(e)setError(e.message);else{setEditing(null);setToast('Data karyawan tersimpan.');refresh()}
+  }
+
+  const filtered=useMemo(()=>employees.filter(k=>`${k.nama} ${k.id_karyawan||''} ${k.jabatan||''} ${k.departemen||''}`.toLowerCase().includes(search.toLowerCase())),[employees,search]);
+  const filteredA=useMemo(()=>attendance.filter(a=>`${a.nama||''} ${a.id_karyawan||''} ${a.status||''}`.toLowerCase().includes(search.toLowerCase())),[attendance,search]);
+  const today=attendance.filter(a=>a.tanggal===isoToday());
+  const present=today.filter(a=>['Hadir','Tepat Waktu','Terlambat'].includes(a.status||'')).length;
+  const late=today.filter(a=>(a.status||'').toLowerCase().includes('terlambat')||Number(a.keterlambatan_menit)>0).length;
+  const payroll=employees.reduce((s,k)=>s+Number(k.gaji_pokok||0),0);
+  const activeLabel=menuGroups.flatMap(g=>g.items).find((x) => x[0] === menu)?.[1] || 'Overview';
+
+  const exportCsv=(rows:Record<string,unknown>[],filename:string)=>{
+    if(!rows.length){setToast('Tidak ada data untuk diekspor.');return}
+    const keys=Object.keys(rows[0]);const esc=(v:unknown)=>`"${String(v??'').replace(/"/g,'""')}"`;
+    const csv=[keys.join(';'),...rows.map(r=>keys.map(k=>esc(r[k])).join(';'))].join('\n');
+    const a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'}));a.download=filename;a.click();URL.revokeObjectURL(a.href);
+  };
+
+  if(sessionChecking)return <div className="login-wrap"><div className="login-card"><div className="loading">Memeriksa sesi keamanan...</div></div></div>;
+  if(!logged)return <Login email={email} pin={pin} setEmail={setEmail} setPin={setPin} onSubmit={login} loading={loading} error={error}/>;
+
+  return <div className="talenta-shell">
+    <aside className="sidebar">
+      {/* Header Sidebar / Logo */}
+      <div className="sidebar-header" onClick={()=>setSidebar(!sidebar)}>
+        <span className="logo-icon">⚡</span>
+        {sidebar && <span className="logo-text">MoonXprojecT</span>}
+      </div>
+
+      {/* DAFTAR MENU SIDEBAR LENGKAP */}
+      <div className="sidebar-content" style={{ flex: 1, overflowY: 'auto' }}>
+        {menuGroups.map((group, idx) => (
+          <div key={idx} className="menu-group" style={{ marginBottom: '16px' }}>
+            {sidebar && (
+              <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', padding: '0 16px 6px 16px', letterSpacing: '0.5px' }}>
+                {group.title}
+              </div>
+            )}
+            {group.items.map(([key, label, icon]) => {
+              if (!menuPermissionForRole(key as MenuKey, userRole, dbPerms)) return null;
+              const isActive = menu === key;
+              return (
+                <button
+                  key={key}
+                  className={`menu-item ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setMenu(key as MenuKey);
+                    location.hash = `#/${key}`;
+                    if (window.innerWidth < 900) setSidebar(false);
+                  }}
+                  title={label}
+                  style={{
+                    width: '100%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '12px',
+                    padding: '10px 16px',
+                    background: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+                    border: 'none',
+                    color: '#fff',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    fontSize: '13px'
+                  }}
+                >
+                  <Icon name={icon} />
+                  {sidebar && <span className="menu-text">{label}</span>}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+
+      {/* BAGIAN BAWAH SIDEBAR (PILIHAN BAHASA, PROFIL, & LOGOUT) */}
+      <div className="sidebar-bottom">
+        {sidebar && (
+          <div style={{ padding: '4px 12px 12px 12px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '8px' }}>
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', fontWeight: 500, letterSpacing: '0.5px' }}>
+              BAHASA / LANGUAGE
+            </div>
+            <select 
+              value={lang} 
+              onChange={(e) => setLang(e.target.value)}
+              style={{ 
+                width: '100%', 
+                padding: '8px 12px', 
+                borderRadius: '8px', 
+                border: '1px solid rgba(255, 255, 255, 0.15)', 
+                background: 'rgba(255, 255, 255, 0.07)', 
+                color: '#ffffff',
+                fontSize: '13px', 
+                fontWeight: 500,
+                outline: 'none',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)')}
+              onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)')}
+            >
+              <option value="id" style={{ background: '#1e293b', color: '#fff' }}>🇮🇩 Indonesia</option>
+              <option value="en" style={{ background: '#1e293b', color: '#fff' }}>🇬🇧 English</option>
+              <option value="ja" style={{ background: '#1e293b', color: '#fff' }}>🇯🇵 日本語</option>
+              <option value="ko" style={{ background: '#1e293b', color: '#fff' }}>🇰🇷 한국어</option>
+              <option value="zh" style={{ background: '#1e293b', color: '#fff' }}>🇨🇳 中文</option>
+            </select>
+          </div>
+        )}
+
+        <div className="admin-mini">
+          <div className="avatar">HR</div>
+          {sidebar && <div><b>{userRole || 'User'}</b><small>MoonXprojecT Access</small></div>}
+        </div>
+
+        <button className="logout" onClick={async () => {
+          await signOut();
+          setLogged(false);
+          setUserRole('');
+          setDbPerms([]);
+          setMenu('overview');
+          location.hash = '/home';
+        }}>
+          <Icon name="logout"/>{sidebar && 'Keluar'}
+        </button>
+      </div>
+    </aside>
+
+    <main className="talenta-main">
+      <header className="topbar">
+        <button className="icon-btn" aria-label="Buka menu" onClick={()=>setSidebar(v=>!v)}><Icon name="menu"/></button>
+        <div className="crumb"><span>MoonXprojecT</span><b>/</b>{activeLabel}</div>
+        <div className="top-actions">
+          <div className="search-global"><span><Icon name="search"/></span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari data..."/></div>
+          <button className="icon-btn" aria-label="Muat ulang" onClick={()=>refresh()}><Icon name="refresh"/></button>
+          <div className="avatar">HR</div>
+        </div>
+      </header>
+      <section className="page">
+        {loading&&<div className="loading">Memuat data…</div>}
+        {error&&<div className="alert">{error}</div>}
+        {menu==='overview'&&<Overview employees={employees} attendance={attendance} present={present} late={late} payroll={payroll} onNavigate={navigate}/>}
+        {menu==='id-card'&&<IDCardModule employees={employees} companyName="MoonXprojecT" logoUrl={moonLogo}/> }
+        {menu==='employees'&&<Employees data={filtered} onDelete={removeEmployee} onEdit={setEditing} onExport={()=>exportCsv(employees as any,'database-karyawan.csv')} onAdd={()=>navigate('employee-add')} onConfirmEmail={confirmEmployeeEmail}/> }
+        {menu==='employee-360'&&<Employee360 employees={employees}/>}
+        {menu==='employee-add'&&<AddEmployee refresh={refresh} onDone={()=>navigate('employees')}/>}
+        {menu==='hr-operations'&&<HRISCore employees={employees}/>}
+        {menu==='production-hr'&&<ProductionHR employees={employees}/>} 
+        {menu==='organization'&&<MasterData initialTab="cabang"/>}
+        {['attendance','attendance-today','late','leave','overtime','selfie'].includes(menu)&&<AttendanceModule type={menu} data={filteredA} onRefresh={refresh} onExport={()=>exportCsv(attendance as any,'laporan-absensi.csv')}/>}
+        {menu==='schedule'&&<MasterData initialTab="jadwal"/>}
+        {menu==='shift'&&<MasterData initialTab="shift"/>}
+        {menu==='holiday'&&<HolidayModule/>}
+        {['leave-request','leave-balance'].includes(menu)&&<LeaveModule initial={menu}/>}
+        {['payroll','payroll-components','payroll-overtime','payslip'].includes(menu)&&<PayrollEnterprise employees={employees}/>}
+        {menu==='payroll-engine'&&<PayrollEngineV9/>}
+        {menu==='payroll-production-v22'&&<PayrollProductionV22/>}
+        {menu==='payroll-indonesia-v23'&&<PayrollIndonesiaV23/>}
+        {['performance','kpi'].includes(menu)&&<TalentModule initial={menu} employees={employees}/>}
+        {menu==='recruitment-v25'&&<RecruitmentATSv25/>}
+        {menu.startsWith('enterprise-v')&&menu!=='enterprise-v20'&&<EnterpriseRoadmapV26V35 version={menu.replace('enterprise-','') as any}/>}
+        {['recruitment','candidates'].includes(menu)&&<RecruitmentEnterprise/>}
+        {menu==='reports'&&<Reports employees={employees} attendance={attendance} onExport={exportCsv}/>}
+        {menu==='settings'&&<Settings/>}
+        {menu==='roles'&&<RoleEditorEnterprise userRole={userRole}/>}
+        {menu==='audit'&&<Audit/>}
+        {menu==='approvals'&&<ApprovalCenter/>}
+        {menu==='notifications'&&<Notifications/>}
+        {menu==='system-health'&&<SystemHealth/>}
+        {menu==='enterprise-v20'&&<EnterpriseV20 employees={employees}/>}
+        {menu==='security-v21'&&<SecurityCenterV21/>} 
+        {editing&&<EmployeeEditor employee={editing} onClose={()=>setEditing(null)} onSave={saveEdit}/>}
+        {toast&&<button className="toast" onClick={()=>setToast('')}>{toast} ×</button>}
+      </section>
+    </main>
+  </div>
+} const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [employees,setEmployees]=useState<Karyawan[]>([]),[attendance,setAttendance]=useState<Absensi[]>([]);
  const [search,setSearch]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState(''),[toast,setToast]=useState('');
