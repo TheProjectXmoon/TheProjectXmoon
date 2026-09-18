@@ -1,4 +1,3 @@
-import React from 'react';
 import type { Announcement } from './types';
 
 export default function EmployeeAnnouncementCenter({
