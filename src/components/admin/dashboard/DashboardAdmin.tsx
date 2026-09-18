@@ -19,7 +19,7 @@ import EnterpriseRoadmapV26V35 from '../enterprise/EnterpriseRoadmapV26V35';
 import moonLogo from '../../../assets/moon-logo.svg';
 import IDCardModule from '../employee/IDCardModule';
 import '../../../styles/admin/id-card.css';
-
+import { useTranslation } from '../../../locales/LanguageContext';
 type Karyawan = {
   id: string;
   id_karyawan?: string;
@@ -100,6 +100,7 @@ function Icon({name}:{name:string}){
 }
 
 export default function DashboardAdmin(){
+  const { lang, setLang, t } = useTranslation();
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
@@ -356,7 +357,21 @@ export default function DashboardAdmin(){
     </div>
   ))}
 </nav>
-   <div className="sidebar-bottom"><div className="admin-mini"><div className="avatar">HR</div>{sidebar&&<div><b>{userRole||'User'}</b><small>MoonXprojecT Access</small></div>}</div><button className="logout" onClick={async()=>{await signOut();setLogged(false);setUserRole('');setDbPerms([]);setMenu('overview');location.hash='/home'}}><Icon name="logout"/>{sidebar&&'Keluar'}</button></div>
+   {/* Dropdown Pemilih Bahasa */}
+<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', paddingRight: '15px' }}>
+  <span>🌐</span>
+  <select 
+    value={lang} 
+    onChange={(e) => setLang(e.target.value)}
+    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d8dee8', background: '#fff', fontSize: '13px', cursor: 'pointer' }}
+  >
+    <option value="id">🇮🇩 Indonesia</option>
+    <option value="en">🇬🇧 English</option>
+    <option value="ja">🇯🇵 日本語</option>
+    <option value="ko">한국어</option>
+    <option value="zh">中文</option>
+  </select>
+</div>
   </aside>
   <main className="talenta-main"><header className="topbar"><button className="icon-btn" aria-label="Buka menu" onClick={()=>setSidebar(v=>!v)}><Icon name="menu"/></button><div className="crumb"><span>MoonXprojecT</span><b>/</b>{activeLabel}</div><div className="top-actions"><div className="search-global"><span><Icon name="search"/></span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari data..."/></div><button className="icon-btn" aria-label="Muat ulang" onClick={()=>refresh()}><Icon name="refresh"/></button><div className="avatar">HR</div></div></header>
    <section className="page">{loading&&<div className="loading">Memuat data…</div>}{error&&<div className="alert">{error}</div>}
