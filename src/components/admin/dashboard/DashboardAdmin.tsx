@@ -471,28 +471,27 @@ export default function DashboardAdmin() {
                 const isActive = menu === key;
                 return (
                   <button
-                    key={key}
-                    className={`menu-item ${isActive ? 'active' : ''}`}
-                    onClick={() => navigate(key as MenuKey)}
-                    title={label as string}
-                    style={{
-                      width: '100%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '12px',
-                      padding: '10px 16px',
-                      background: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
-                      border: 'none',
-                      color: '#fff',
-                      cursor: 'pointer',
-                      textAlign: 'left',
-                      fontSize: '13px'
-                    }}
-                  >
-                    <Icon name={icon as string} />
-                    {sidebar && <span className="menu-text">{label as string}</span>}
-                  </button>
-                );
+  key={key}
+  className={`menu-item ${isActive ? 'active' : ''}`}
+  onClick={() => navigate(key as MenuKey)}
+  title={label as string}
+  style={{
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    padding: '10px 16px',
+    background: isActive ? 'rgba(255, 255, 255, 0.15)' : 'transparent',
+    border: 'none',
+    color: 'var(--mx-text, #ffffff)', // Ubah dari '#fff' agar dinamis mengikuti tema/teks aktif
+    cursor: 'pointer',
+    textAlign: 'left',
+    fontSize: '13px'
+  }}
+>
+  <Icon name={icon as string} />
+  {sidebar && <span className="menu-text">{label as string}</span>}
+</button>                );
               })}
             </div>
           ))}
