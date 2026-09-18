@@ -18,7 +18,6 @@ import RecruitmentATSv25 from '../recruitment/RecruitmentATSv25';
 import EnterpriseRoadmapV26V35 from '../enterprise/EnterpriseRoadmapV26V35';
 import moonLogo from '../../../assets/moon-logo.svg';
 import IDCardModule from '../employee/IDCardModule';
-import ProfessionalSuite from '../enterprise/ProfessionalSuite';
 import '../../../styles/admin/id-card.css';
 
 type Karyawan = {
