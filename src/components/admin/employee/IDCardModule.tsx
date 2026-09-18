@@ -24,7 +24,7 @@ function initials(name: string) {
 function barcodePattern(value: string) {
   let seed = 2166136261;
   for (const ch of value) seed = Math.imul(seed ^ ch.charCodeAt(0), 16777619);
-  return Array.from({ length: 36 }, (_, i) => {
+  return Array.from({ length: 36 }, () => {
     seed ^= seed << 13; seed ^= seed >>> 17; seed ^= seed << 5;
     return Math.abs(seed) % 5 + 1;
   });
