@@ -172,7 +172,6 @@ export default function DashboardAdmin() {
   ];
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
- const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
  const [employees,setEmployees]=useState<Karyawan[]>([]),[attendance,setAttendance]=useState<Absensi[]>([]);
  const [search,setSearch]=useState(''),[loading,setLoading]=useState(false),[error,setError]=useState(''),[toast,setToast]=useState('');
  const [editing,setEditing]=useState<Karyawan|null>(null),[userRole,setUserRole]=useState('');
