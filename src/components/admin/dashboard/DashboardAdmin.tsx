@@ -68,7 +68,19 @@ type MenuKey =
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 
-const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
+const rolePermissions: Record<string,string[]> = {'Super Admin':['*'],'Admin':['people','attendance','schedule','leave','payroll','talent','reports','system'],'HRD':['people','attendance','schedule','leave','talent','reports'],'Payroll':['people.read','attendance.read','payroll','reports.payroll'],'Supervisor':['people.read','attendance.read','schedule.read','leave.read','leave.approve','reports.attendance'],'Karyawan':[]};
+const menuGroup=(key:MenuKey)=>['professional-suite'].includes(key)?'system':['employees','id-card','employee-360','employee-add','organization'].includes(key)?'people':['attendance','attendance-today','late','leave','overtime','selfie'].includes(key)?'attendance':['schedule','shift','holiday'].includes(key)?'schedule':['leave-request','leave-balance','approvals'].includes(key)?'leave':['payroll','payroll-components','payroll-overtime','payslip','production-hr','payroll-engine','payroll-production-v22'].includes(key)?'payroll':['performance','kpi'].includes(key)?'talent':['recruitment','candidates','recruitment-v25'].includes(key)?'recruitment':['enterprise-v26','enterprise-v27','enterprise-v28','enterprise-v29','enterprise-v30','enterprise-v31','enterprise-v32','enterprise-v33','enterprise-v34','enterprise-v35'].includes(key)?'system':key==='reports'?'reports':key==='settings'?'settings':key==='roles'?'roles':key==='audit'?'audit':key==='notifications'?'notifications':key==='system-health'?'system':(key==='enterprise-v26'||key==='payroll-indonesia-v23')||key==='security-v21'?'system':'overview';
+const requiredPermission=(key:MenuKey)=>{if(key==='professional-suite')return 'system.health';if(key==='hr-operations')return 'people.read';if(key==='production-hr'||key==='payroll-engine'||key==='payroll-production-v22')return 'payroll.read';const g=menuGroup(key); if(key==='employee-add')return 'people.write'; if(key==='roles')return 'roles.read'; if(key==='settings')return 'settings.write'; if(key==='audit')return 'audit.read'; if(key==='approvals')return 'approval.read'; if(key==='notifications')return 'notifications.read'; if(key==='system-health')return 'system.health';if((key==='enterprise-v26'||key==='payroll-indonesia-v23'))return 'system.health'; if(key==='security-v21')return 'security.read'; if(key.startsWith('enterprise-v')) return 'system.health'; if(key==='overtime')return 'overtime.read'; if(key==='reports')return 'reports.read'; if(g==='recruitment')return 'recruitment.read'; if(g==='talent')return 'talent.read'; return g==='overview'?'':`${g}.read`;};
+const menuPermissionForRole=(key:MenuKey,role:string,dbPerms:string[]=[])=>{if(role==='Super Admin'||requiredPermission(key)===''||dbPerms.includes('*'))return true;const req=requiredPermission(key);if(key==='approvals')return ['approval.read','leave.approve','overtime.approve','payroll.approve','recruitment.approve'].some(p=>hasPermission(dbPerms,p,role)||hasPermission(rolePermissions[role]||[],p,role));return hasPermission(dbPerms,req,role)||hasPermission(dbPerms,menuGroup(key),role)||hasPermission(rolePermissions[role]||[],req,role)||hasPermission(rolePermissions[role]||[],menuGroup(key),role);};
+
+function Icon({name}:{name:string}){
+ const paths:Record<string,string>={chevronDown:'M6 9l6 6 6-6',chevronRight:'M9 6l6 6-6 6',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9',menu:'M4 6h16M4 12h16M4 18h16',refresh:'M20 11a8 8 0 1 0 1 4m-1-4v-5m0 5h-5',search:'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16m10 2-4.3-4.3',home:'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3a4 4 0 0 1 4 4m-1-8a3 3 0 0 1 0 6',plus:'M12 5v14M5 12h14',org:'M4 4h16v16H4zM8 8h3v3H8zm5 0h3v3h-3zM8 13h3v3H8zm5 0h3v3h-3z',clock:'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',check:'m5 12 4 4L19 6',alert:'M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0',leave:'M7 3h10v18H7zM10 12h7m0 0-3-3m3 3-3 3',arrow:'M5 12h14m-6-6 6 6-6 6',camera:'M4 7h3l2-2h6l2 2h3v12H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8',calendar:'M4 5h16v16H4zM8 3v4m8-4v4M4 10h16',shift:'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4',holiday:'M12 2l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6-5.8-3.5-5.8 3.5 1.6-6.6-5.2-4.4 6.8-.5z',request:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',balance:'M5 4h14v16H5zM9 8h6M9 12h3',payroll:'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5',components:'M5 5h14M5 12h14M5 19h14',kpi:'M5 20V10m7 10V4m7 16v-7',recruitment:'M4 6h16v12H4zM8 10h8M8 14h5',report:'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m0-6v3m0 14v3m10-10h-3M5 12H2m17.1-7.1-2.1 2.1M7 17l-2.1 2.1m12.2 0L15 17M7 7 4.9 4.9',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h6',health:'M20 12h-4l-2 7-4-14-2 7H4',card:'M5 4h14v16H5zM8 8h8M8 12h5M8 16h8',dashboard:'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z'}
+ const d=paths[name]||paths.home; return <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>
+}
+
+export default function DashboardAdmin(){
+ const { lang, setLang, t } = useTranslation();
+  const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
   {
     title: 'UTAMA',
     items: [
@@ -171,18 +183,7 @@ const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
     ]
   }
 ];
-const rolePermissions: Record<string,string[]> = {'Super Admin':['*'],'Admin':['people','attendance','schedule','leave','payroll','talent','reports','system'],'HRD':['people','attendance','schedule','leave','talent','reports'],'Payroll':['people.read','attendance.read','payroll','reports.payroll'],'Supervisor':['people.read','attendance.read','schedule.read','leave.read','leave.approve','reports.attendance'],'Karyawan':[]};
-const menuGroup=(key:MenuKey)=>['professional-suite'].includes(key)?'system':['employees','id-card','employee-360','employee-add','organization'].includes(key)?'people':['attendance','attendance-today','late','leave','overtime','selfie'].includes(key)?'attendance':['schedule','shift','holiday'].includes(key)?'schedule':['leave-request','leave-balance','approvals'].includes(key)?'leave':['payroll','payroll-components','payroll-overtime','payslip','production-hr','payroll-engine','payroll-production-v22'].includes(key)?'payroll':['performance','kpi'].includes(key)?'talent':['recruitment','candidates','recruitment-v25'].includes(key)?'recruitment':['enterprise-v26','enterprise-v27','enterprise-v28','enterprise-v29','enterprise-v30','enterprise-v31','enterprise-v32','enterprise-v33','enterprise-v34','enterprise-v35'].includes(key)?'system':key==='reports'?'reports':key==='settings'?'settings':key==='roles'?'roles':key==='audit'?'audit':key==='notifications'?'notifications':key==='system-health'?'system':(key==='enterprise-v26'||key==='payroll-indonesia-v23')||key==='security-v21'?'system':'overview';
-const requiredPermission=(key:MenuKey)=>{if(key==='professional-suite')return 'system.health';if(key==='hr-operations')return 'people.read';if(key==='production-hr'||key==='payroll-engine'||key==='payroll-production-v22')return 'payroll.read';const g=menuGroup(key); if(key==='employee-add')return 'people.write'; if(key==='roles')return 'roles.read'; if(key==='settings')return 'settings.write'; if(key==='audit')return 'audit.read'; if(key==='approvals')return 'approval.read'; if(key==='notifications')return 'notifications.read'; if(key==='system-health')return 'system.health';if((key==='enterprise-v26'||key==='payroll-indonesia-v23'))return 'system.health'; if(key==='security-v21')return 'security.read'; if(key.startsWith('enterprise-v')) return 'system.health'; if(key==='overtime')return 'overtime.read'; if(key==='reports')return 'reports.read'; if(g==='recruitment')return 'recruitment.read'; if(g==='talent')return 'talent.read'; return g==='overview'?'':`${g}.read`;};
-const menuPermissionForRole=(key:MenuKey,role:string,dbPerms:string[]=[])=>{if(role==='Super Admin'||requiredPermission(key)===''||dbPerms.includes('*'))return true;const req=requiredPermission(key);if(key==='approvals')return ['approval.read','leave.approve','overtime.approve','payroll.approve','recruitment.approve'].some(p=>hasPermission(dbPerms,p,role)||hasPermission(rolePermissions[role]||[],p,role));return hasPermission(dbPerms,req,role)||hasPermission(dbPerms,menuGroup(key),role)||hasPermission(rolePermissions[role]||[],req,role)||hasPermission(rolePermissions[role]||[],menuGroup(key),role);};
 
-function Icon({name}:{name:string}){
- const paths:Record<string,string>={chevronDown:'M6 9l6 6 6-6',chevronRight:'M9 6l6 6-6 6',logout:'M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4m7 14 5-5-5-5m5 5H9',menu:'M4 6h16M4 12h16M4 18h16',refresh:'M20 11a8 8 0 1 0 1 4m-1-4v-5m0 5h-5',search:'M11 19a8 8 0 1 1 0-16 8 8 0 0 1 0 16m10 2-4.3-4.3',home:'M3 10.5 12 3l9 7.5V21a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z',users:'M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8m6-3a4 4 0 0 1 4 4m-1-8a3 3 0 0 1 0 6',plus:'M12 5v14M5 12h14',org:'M4 4h16v16H4zM8 8h3v3H8zm5 0h3v3h-3zM8 13h3v3H8zm5 0h3v3h-3z',clock:'M12 7v5l3 2M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0',check:'m5 12 4 4L19 6',alert:'M12 9v4m0 4h.01M10.3 3.9 2.7 17a2 2 0 0 0 1.7 3h15.2a2 2 0 0 0 1.7-3L13.7 3.9a2 2 0 0 0-3.4 0',leave:'M7 3h10v18H7zM10 12h7m0 0-3-3m3 3-3 3',arrow:'M5 12h14m-6-6 6 6-6 6',camera:'M4 7h3l2-2h6l2 2h3v12H4zM12 16a4 4 0 1 0 0-8 4 4 0 0 0 0 8',calendar:'M4 5h16v16H4zM8 3v4m8-4v4M4 10h16',shift:'M6 4h12v16H6zM9 8h6M9 12h6M9 16h4',holiday:'M12 2l2.6 6.3 6.8.5-5.2 4.4 1.6 6.6-5.8-3.5-5.8 3.5 1.6-6.6-5.2-4.4 6.8-.5z',request:'M6 3h12v18H6zM9 8h6M9 12h6M9 16h4',balance:'M5 4h14v16H5zM9 8h6M9 12h3',payroll:'M5 4h14v16H5zM8 8h8M8 12h8M8 16h5',components:'M5 5h14M5 12h14M5 19h14',kpi:'M5 20V10m7 10V4m7 16v-7',recruitment:'M4 6h16v12H4zM8 10h8M8 14h5',report:'M5 4h14v16H5zM8 9h8M8 13h8M8 17h5',settings:'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8m0-6v3m0 14v3m10-10h-3M5 12H2m17.1-7.1-2.1 2.1M7 17l-2.1 2.1m12.2 0L15 17M7 7 4.9 4.9',bell:'M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9m-8 13h6',health:'M20 12h-4l-2 7-4-14-2 7H4',card:'M5 4h14v16H5zM8 8h8M8 12h5M8 16h8',dashboard:'M4 4h6v6H4zm10 0h6v6h-6zM4 14h6v6H4zm10 0h6v6h-6z'}
- const d=paths[name]||paths.home; return <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>
-}
-
-export default function DashboardAdmin(){
- const { lang, setLang } = useTranslation();
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
@@ -396,65 +397,66 @@ export default function DashboardAdmin(){
  if(sessionChecking)return <div className="login-wrap"><div className="login-card"><div className="loading">Memeriksa sesi keamanan...</div></div></div>;
  if(!logged)return <Login email={email} pin={pin} setEmail={setEmail} setPin={setPin} onSubmit={login} loading={loading} error={error}/>;
  return <div className="talenta-shell">
-  <aside className={`talenta-sidebar ${sidebar?'':'collapsed'}`}>
- <div className="brand">
-  <div className="brand-mark"><img src={moonLogo} alt="MoonXprojecT" /></div>
-  {sidebar && (
-    <div>
-      <b>MoonXprojecT</b>
-      <small>Human Resources Platform</small>
-    </div>
-  )}
-</div>
+  <aside className="sidebar">
+      {/* ... bagian atas sidebar dan daftar menu ... */}
 
-{sidebar && (
-  <div className="workspace">
-    <span>WORKSPACE</span>
-    <b>MoonXprojecT</b>
-    <small>HR Management</small>
+      {/* ===== BAGIAN BAWAH SIDEBAR (PROFIL, BAHASA, & LOGOUT) ===== */}
+      <div className="sidebar-bottom">
+        
+        {/* Dropdown Pemilih Bahasa */}
+        {sidebar && (
+  <div style={{ padding: '4px 12px 12px 12px', borderBottom: '1px solid rgba(255,255,255,0.1)', marginBottom: '8px' }}>
+    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginBottom: '4px', fontWeight: 500, letterSpacing: '0.5px' }}>
+      BAHASA / LANGUAGE
+    </div>
+    <select 
+      value={lang} 
+      onChange={(e) => setLang(e.target.value)}
+      style={{ 
+        width: '100%', 
+        padding: '8px 12px', 
+        borderRadius: '8px', 
+        border: '1px solid rgba(255, 255, 255, 0.15)', 
+        background: 'rgba(255, 255, 255, 0.07)', 
+        color: '#ffffff',
+        fontSize: '13px', 
+        fontWeight: 500,
+        outline: 'none',
+        cursor: 'pointer',
+        transition: 'all 0.2s ease',
+      }}
+      onMouseOver={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.12)')}
+      onMouseOut={(e) => (e.currentTarget.style.background = 'rgba(255, 255, 255, 0.07)')}
+    >
+      <option value="id" style={{ background: '#1e293b', color: '#fff' }}>🇮🇩 Indonesia</option>
+      <option value="en" style={{ background: '#1e293b', color: '#fff' }}>🇬🇧 English</option>
+      <option value="ja" style={{ background: '#1e293b', color: '#fff' }}>🇯🇵 日本語</option>
+      <option value="ko" style={{ background: '#1e293b', color: '#fff' }}>🇰🇷 한국어</option>
+      <option value="zh" style={{ background: '#1e293b', color: '#fff' }}>🇨🇳 中文</option>
+    </select>
   </div>
 )}
+        {/* Informasi Admin */}
+        <div className="admin-mini">
+          <div className="avatar">HR</div>
+          {sidebar && <div><b>{userRole || 'User'}</b><small>MoonXprojecT Access</small></div>}
+        </div>
 
-<nav className="sidebar-nav">
-  {menuGroups.map(g => (
-    <div className="nav-group" key={g.title}>
-      {g.items.some(([key]) => menuPermissionForRole(key, userRole, dbPerms)) && sidebar && (
-        <button className="group-title" onClick={() => setOpen(v => ({ ...v, [g.title]: !v[g.title] }))}>
-          <span>{g.title}</span>
-          <span><Icon name={open[g.title] ? 'chevronDown' : 'chevronRight'}/></span>
+        {/* Tombol Logout */}
+        <button className="logout" onClick={async () => {
+          await signOut();
+          setLogged(false);
+          setUserRole('');
+          setDbPerms([]);
+          setMenu('overview');
+          location.hash = '/home';
+        }}>
+          <Icon name="logout"/>{sidebar && 'Keluar'}
         </button>
-      )}
-      {(sidebar ? open[g.title] : true) && g.items.filter(([key]) => menuPermissionForRole(key, userRole, dbPerms)).map(([key, label, icon]) => (
-        <button 
-          key={key} 
-          className={`nav-item ${menu === key ? 'active' : ''}`} 
-          onClick={() => navigate(key as MenuKey)} 
-          title={label}
-        >
-          <span className="nav-icon"><Icon name={icon}/></span>
-          {sidebar && <span>{label}</span>}
-          {key === 'employees' && sidebar && <em>{employees.length}</em>}
-        </button>
-      ))}
-    </div>
-  ))}
-</nav>
-   {/* Dropdown Pemilih Bahasa */}
-<div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', paddingRight: '15px' }}>
-  <span>🌐</span>
-  <select 
-    value={lang} 
-    onChange={(e) => setLang(e.target.value)}
-    style={{ padding: '6px 10px', borderRadius: '6px', border: '1px solid #d8dee8', background: '#fff', fontSize: '13px', cursor: 'pointer' }}
-  >
-    <option value="id">🇮🇩 Indonesia</option>
-    <option value="en">🇬🇧 English</option>
-    <option value="ja">🇯🇵 日本語</option>
-    <option value="ko">한국어</option>
-    <option value="zh">中文</option>
-  </select>
-</div>
-  </aside>
+
+      </div>
+      {/* ======================================================== */}
+    </aside>
   <main className="talenta-main"><header className="topbar"><button className="icon-btn" aria-label="Buka menu" onClick={()=>setSidebar(v=>!v)}><Icon name="menu"/></button><div className="crumb"><span>MoonXprojecT</span><b>/</b>{activeLabel}</div><div className="top-actions"><div className="search-global"><span><Icon name="search"/></span><input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Cari data..."/></div><button className="icon-btn" aria-label="Muat ulang" onClick={()=>refresh()}><Icon name="refresh"/></button><div className="avatar">HR</div></div></header>
    <section className="page">{loading&&<div className="loading">Memuat data…</div>}{error&&<div className="alert">{error}</div>}
     {menu==='overview'&&<Overview employees={employees} attendance={attendance} present={present} late={late} payroll={payroll} onNavigate={navigate}/>}
