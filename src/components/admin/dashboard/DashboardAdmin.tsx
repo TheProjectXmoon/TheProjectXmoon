@@ -171,10 +171,8 @@ export default function DashboardAdmin() {
     }
   ];
   const [_open, _setOpen] = useState<Record<string, boolean>>(
-    Object.fromEntries(menuGroups.map(g => [g.title, true]))
-  );
-
-  // ... sisa kode komponen selanjutnya ...
+  Object.fromEntries(menuGroups.map(g => [g.title, true]))
+);
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
