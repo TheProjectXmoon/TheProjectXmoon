@@ -1,4 +1,3 @@
-import React from 'react';
 import type { EnterpriseModule } from './types';
 
 const modules: Array<{id: EnterpriseModule; title: string; description: string}> = [
