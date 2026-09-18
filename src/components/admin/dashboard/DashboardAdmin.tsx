@@ -383,7 +383,38 @@ export default function DashboardAdmin() {
  if(!logged)return <Login email={email} pin={pin} setEmail={setEmail} setPin={setPin} onSubmit={login} loading={loading} error={error}/>;
  return <div className="talenta-shell">
   <aside className="sidebar">
-      {/* ... bagian atas sidebar dan daftar menu ... */}
+      <div className="sidebar-head">
+        <div className="brand">
+          <div className="brand-mark"><img src={moonLogo} alt="MoonXprojecT" /></div>
+          {sidebar && <div><b>MoonXprojecT</b><small>People Platform</small></div>}
+        </div>
+      </div>
+
+      <nav className="sidebar-nav" aria-label="Menu utama">
+        {menuGroups.map(group => {
+          const visibleItems = group.items.filter(item =>
+            menuPermissionForRole(item[0], userRole, dbPerms)
+          );
+          if (!visibleItems.length) return null;
+          return (
+            <div className="nav-group" key={group.title}>
+              {sidebar && <div className="nav-title">{group.title}</div>}
+              {visibleItems.map(([key, label, icon]) => (
+                <button
+                  key={key}
+                  className={`nav-item ${menu === key ? 'active' : ''}`}
+                  onClick={() => navigate(key)}
+                  title={!sidebar ? label : undefined}
+                  type="button"
+                >
+                    <Icon name={icon} />
+                    {sidebar && <span>{label}</span>}
+                  </button>
+                ))}
+            </div>
+          );
+        })}
+      </nav>
 
       {/* ===== BAGIAN BAWAH SIDEBAR (PROFIL, BAHASA, & LOGOUT) ===== */}
       <div className="sidebar-bottom">
