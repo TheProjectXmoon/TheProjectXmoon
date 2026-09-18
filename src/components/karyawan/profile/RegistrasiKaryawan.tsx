@@ -6,6 +6,15 @@ interface RegistrasiKaryawanProps {
   onBack?: () => void;
 }
 
+interface SupabaseErrorLike {
+  message?: string;
+  name?: string;
+  status?: number;
+  code?: string;
+  details?: string;
+  hint?: string;
+}
+
 const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
   onBack,
 }) => {
@@ -32,18 +41,81 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
     });
   };
 
+  const getDetailedError = (err: unknown): string => {
+    const errorObject = err as SupabaseErrorLike | null | undefined;
+
+    const message = errorObject?.message?.trim();
+    const name = errorObject?.name;
+    const status = errorObject?.status;
+    const code = errorObject?.code;
+    const details = errorObject?.details;
+    const hint = errorObject?.hint;
+
+    // Error jaringan/browser seperti "Failed to fetch"
+    if (
+      message?.toLowerCase().includes('failed to fetch') ||
+      name === 'TypeError' &&
+      message?.toLowerCase().includes('fetch')
+    ) {
+      return [
+        'Tidak dapat terhubung ke Supabase.',
+        '',
+        'Periksa hal berikut:',
+        '1. VITE_SUPABASE_URL di Netlify sudah benar.',
+        '2. VITE_SUPABASE_ANON_KEY sudah benar.',
+        '3. Environment variable tersedia untuk Production.',
+        '4. Project Supabase masih aktif.',
+        '5. Setelah mengubah Environment Variables, lakukan redeploy.',
+        '',
+        'Jika semua sudah benar tetapi masih gagal, buka browser Console (F12) dan kirim pesan error merahnya.'
+      ].join('\n');
+    }
+
+    // Error autentikasi Supabase
+    if (message) {
+      const extra = [
+        status ? `HTTP Status: ${status}` : '',
+        code ? `Code: ${code}` : '',
+        details ? `Detail: ${details}` : '',
+        hint ? `Hint: ${hint}` : '',
+      ].filter(Boolean);
+
+      return extra.length > 0
+        ? `${message}\n\n${extra.join('\n')}`
+        : message;
+    }
+
+    // Error object yang tidak mempunyai message
+    if (typeof err === 'string' && err.trim()) {
+      return err;
+    }
+
+    return 'Pendaftaran gagal karena terjadi kesalahan yang tidak diketahui. Silakan buka Console browser (F12) untuk melihat detail.';
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     setError('');
+    setSuccess(false);
 
-    if (!form.nama.trim()) {
+    const nama = form.nama.trim();
+    const email = form.email.trim().toLowerCase();
+    const noTelp = form.no_telp.trim();
+    const alamatRumah = form.alamat_rumah.trim();
+
+    if (!nama) {
       setError('Nama lengkap wajib diisi.');
       return;
     }
 
-    if (!form.email.trim()) {
+    if (!email) {
       setError('Email wajib diisi.');
+      return;
+    }
+
+    if (!form.password) {
+      setError('Password wajib diisi.');
       return;
     }
 
@@ -60,14 +132,42 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
     setLoading(true);
 
     try {
-      const { error: signUpError } = await supabase.auth.signUp({
-        email: form.email.trim(),
+      /*
+       * Pastikan konfigurasi Supabase tersedia sebelum melakukan signUp.
+       * Ini membantu membedakan masalah konfigurasi dengan masalah Auth.
+       */
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (!supabaseUrl) {
+        throw new Error(
+          'VITE_SUPABASE_URL tidak tersedia. Periksa Environment Variables Netlify.'
+        );
+      }
+
+      if (!supabaseAnonKey) {
+        throw new Error(
+          'VITE_SUPABASE_ANON_KEY tidak tersedia. Periksa Environment Variables Netlify.'
+        );
+      }
+
+      if (
+        !supabaseUrl.startsWith('https://') ||
+        !supabaseUrl.includes('.supabase.co')
+      ) {
+        throw new Error(
+          'VITE_SUPABASE_URL tidak valid. Gunakan Project URL dari Supabase.'
+        );
+      }
+
+      const { data, error: signUpError } = await supabase.auth.signUp({
+        email,
         password: form.password,
         options: {
           data: {
-            nama: form.nama.trim(),
-            no_telp: form.no_telp.trim(),
-            alamat_rumah: form.alamat_rumah.trim(),
+            nama,
+            no_telp: noTelp,
+            alamat_rumah: alamatRumah,
             tanggal_lahir: form.tanggal_lahir || null,
           },
         },
@@ -77,9 +177,21 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
         throw signUpError;
       }
 
+      /*
+       * Supabase dapat mengembalikan user tanpa session ketika
+       * email confirmation diaktifkan. Itu bukan error.
+       */
+      if (!data?.user) {
+        throw new Error(
+          'Supabase tidak mengembalikan data user. Periksa konfigurasi Authentication dan email registration di Supabase.'
+        );
+      }
+
       setSuccess(true);
-    } catch (err: any) {
-      setError(err?.message || 'Pendaftaran gagal. Silakan coba lagi.');
+    } catch (err: unknown) {
+      console.error('MoonXprojecT - Registrasi Karyawan Error:', err);
+
+      setError(getDetailedError(err));
     } finally {
       setLoading(false);
     }
@@ -116,20 +228,20 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
     );
   }
 
- return (
+  return (
     <div className="registration-page">
       <div className="registration-shell">
         <div className="registration-brand">
           <div className="registration-logo">
-  <img
-    src="/sakura-moon.jpg"
-    alt="MoonXprojecT"
-  />
-</div>
+            <img
+              src="/sakura-moon.jpg"
+              alt="MoonXprojecT"
+            />
+          </div>
 
           <div>
             <strong>MoonXprojecT</strong>
-      <span>Human Resources & Workforce Platform</span>
+            <span>Human Resources & Workforce Platform</span>
           </div>
         </div>
 
@@ -147,7 +259,13 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
           </div>
 
           {error && (
-            <div className="registration-error">
+            <div
+              className="registration-error"
+              role="alert"
+              style={{
+                whiteSpace: 'pre-line',
+              }}
+            >
               {error}
             </div>
           )}
@@ -164,6 +282,7 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                   onChange={handleChange}
                   placeholder="Masukkan nama lengkap"
                   required
+                  disabled={loading}
                 />
               </div>
 
@@ -177,6 +296,8 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                     onChange={handleChange}
                     placeholder="nama@email.com"
                     required
+                    disabled={loading}
+                    autoComplete="email"
                   />
                 </div>
 
@@ -187,6 +308,7 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                     value={form.no_telp}
                     onChange={handleChange}
                     placeholder="08xxxxxxxxxx"
+                    disabled={loading}
                   />
                 </div>
               </div>
@@ -198,6 +320,7 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                   name="tanggal_lahir"
                   value={form.tanggal_lahir}
                   onChange={handleChange}
+                  disabled={loading}
                 />
               </div>
 
@@ -209,6 +332,7 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                   onChange={handleChange}
                   placeholder="Masukkan alamat lengkap"
                   rows={3}
+                  disabled={loading}
                 />
               </div>
             </div>
@@ -226,6 +350,8 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                     onChange={handleChange}
                     placeholder="Minimal 6 karakter"
                     required
+                    disabled={loading}
+                    autoComplete="new-password"
                   />
                 </div>
 
@@ -238,6 +364,8 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
                     onChange={handleChange}
                     placeholder="Ulangi password"
                     required
+                    disabled={loading}
+                    autoComplete="new-password"
                   />
                 </div>
               </div>
@@ -263,6 +391,7 @@ const RegistrasiKaryawan: React.FC<RegistrasiKaryawanProps> = ({
               type="button"
               className="registration-back"
               onClick={onBack}
+              disabled={loading}
             >
               Sudah memiliki akun? Kembali ke Login
             </button>
