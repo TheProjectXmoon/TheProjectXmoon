@@ -509,13 +509,19 @@
    MOONXPROJECT THEME MANAGER
    ========================================================= */
 
-:root{
-  --mx-primary:#101a33;
-  --mx-accent:#d6ae58;
-  --mx-background:#f6f7fb;
-  --mx-surface:#ffffff;
-  --mx-text:#172033;
-  --mx-border:#d6ae58;
+:root {
+  --mx-primary: #101a33;
+  --mx-accent: #d6ae58;
+
+  --mx-background: #f6f7fb;
+  --mx-surface: #ffffff;
+
+  --mx-text: #172033;
+  --mx-text-secondary: #344054;
+  --mx-text-muted: #667085;
+
+  --mx-border: #e2e7ee;
+  --mx-border-strong: #cbd2dc;
 }
 
 /* Theme message */
@@ -1341,11 +1347,18 @@ table td {
 .talenta-main .eyebrow{color:#8a6b16 !important;}
 
 /* Prevent theme variables from ever becoming self-referential. */
-:root{
-  --mx-primary:#101a33;
-  --mx-accent:#d6ae58;
-  --mx-background:#f6f7fb;
-  --mx-surface:#ffffff;
-  --mx-text:#172033;
-  --mx-border:#d6ae58;
+:root {
+  --mx-primary: #101a33;
+  --mx-accent: #d6ae58;
+
+  --mx-background: #f6f7fb;
+  --mx-surface: #ffffff;
+
+  --mx-text: #172033;
+  --mx-text-secondary: #344054;
+  --mx-text-muted: #667085;
+
+  --mx-border: #e2e7ee;
+  --mx-border-strong: #cbd2dc;
 }
+
