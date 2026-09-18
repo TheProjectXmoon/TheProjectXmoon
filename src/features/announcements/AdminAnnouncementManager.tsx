@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import type { Announcement, AnnouncementCategory, AnnouncementPriority, AnnouncementAudience } from './types';
 import { validateAnnouncementDraft } from './service';
 
