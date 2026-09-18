@@ -68,7 +68,7 @@ type MenuKey =
 
 const isoToday = () => new Date().toISOString().slice(0, 10);
 
-const menuGroups = [
+const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
   {
     title: 'UTAMA',
     items: [
@@ -170,7 +170,7 @@ const menuGroups = [
       ['audit', 'Audit Log', 'request']
     ]
   }
-] as const;
+];
 const rolePermissions: Record<string,string[]> = {'Super Admin':['*'],'Admin':['people','attendance','schedule','leave','payroll','talent','reports','system'],'HRD':['people','attendance','schedule','leave','talent','reports'],'Payroll':['people.read','attendance.read','payroll','reports.payroll'],'Supervisor':['people.read','attendance.read','schedule.read','leave.read','leave.approve','reports.attendance'],'Karyawan':[]};
 const menuGroup=(key:MenuKey)=>['professional-suite'].includes(key)?'system':['employees','id-card','employee-360','employee-add','organization'].includes(key)?'people':['attendance','attendance-today','late','leave','overtime','selfie'].includes(key)?'attendance':['schedule','shift','holiday'].includes(key)?'schedule':['leave-request','leave-balance','approvals'].includes(key)?'leave':['payroll','payroll-components','payroll-overtime','payslip','production-hr','payroll-engine','payroll-production-v22'].includes(key)?'payroll':['performance','kpi'].includes(key)?'talent':['recruitment','candidates','recruitment-v25'].includes(key)?'recruitment':['enterprise-v26','enterprise-v27','enterprise-v28','enterprise-v29','enterprise-v30','enterprise-v31','enterprise-v32','enterprise-v33','enterprise-v34','enterprise-v35'].includes(key)?'system':key==='reports'?'reports':key==='settings'?'settings':key==='roles'?'roles':key==='audit'?'audit':key==='notifications'?'notifications':key==='system-health'?'system':(key==='enterprise-v26'||key==='payroll-indonesia-v23')||key==='security-v21'?'system':'overview';
 const requiredPermission=(key:MenuKey)=>{if(key==='professional-suite')return 'system.health';if(key==='hr-operations')return 'people.read';if(key==='production-hr'||key==='payroll-engine'||key==='payroll-production-v22')return 'payroll.read';const g=menuGroup(key); if(key==='employee-add')return 'people.write'; if(key==='roles')return 'roles.read'; if(key==='settings')return 'settings.write'; if(key==='audit')return 'audit.read'; if(key==='approvals')return 'approval.read'; if(key==='notifications')return 'notifications.read'; if(key==='system-health')return 'system.health';if((key==='enterprise-v26'||key==='payroll-indonesia-v23'))return 'system.health'; if(key==='security-v21')return 'security.read'; if(key.startsWith('enterprise-v')) return 'system.health'; if(key==='overtime')return 'overtime.read'; if(key==='reports')return 'reports.read'; if(g==='recruitment')return 'recruitment.read'; if(g==='talent')return 'talent.read'; return g==='overview'?'':`${g}.read`;};
@@ -182,7 +182,7 @@ function Icon({name}:{name:string}){
 }
 
 export default function DashboardAdmin(){
-  const { lang, setLang, t } = useTranslation();
+ const { lang, setLang } = useTranslation();
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
