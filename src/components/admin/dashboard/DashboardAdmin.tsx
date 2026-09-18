@@ -82,7 +82,7 @@ export default function DashboardAdmin() {
   const { lang, setLang, t } = useTranslation();
 
   // 1. DEFINISIKAN menuGroups TERLEBIH DAHULU di atas
-  const menuGroups = [
+  const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
     {
       title: 'UTAMA',
       items: [
