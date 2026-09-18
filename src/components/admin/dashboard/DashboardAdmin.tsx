@@ -78,112 +78,103 @@ function Icon({name}:{name:string}){
  const d=paths[name]||paths.home; return <svg className="ui-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={d}/></svg>
 }
 
-export default function DashboardAdmin(){
- const { lang, setLang, t } = useTranslation();
-  const menuGroups: { title: string; items: [MenuKey, string, string][] }[] = [
-  {
-    title: 'UTAMA',
-    items: [
-      ['overview', 'Overview', 'home'],
-      ['professional-suite', 'Professional Suite', 'kpi']
-    ]
-  },
-  {
-    title: 'PEOPLE',
-    items: [
-      ['employees', 'Semua Karyawan', 'users'],
-      ['id-card', 'ID Card', 'card'],
-      ['employee-360', 'Employee 360°', 'users'],
-      ['employee-add', 'Tambah Karyawan', 'plus'],
-      ['organization', 'Organisasi', 'org'],
-      ['hr-operations', 'HR Operations', 'settings']
-    ]
-  },
-  {
-    title: 'ATTENDANCE',
-    items: [
-      ['attendance', 'Rekap Absensi', 'clock'],
-      ['attendance-today', 'Absensi Hari Ini', 'check'],
-      ['late', 'Keterlambatan', 'alert'],
-      ['leave', 'Izin & Sakit', 'leave'],
-      ['overtime', 'Lembur', 'arrow'],
-      ['selfie', 'Monitoring Selfie', 'camera']
-    ]
-  },
-  {
-    title: 'SCHEDULE',
-    items: [
-      ['schedule', 'Jadwal Kerja', 'calendar'],
-      ['shift', 'Shift', 'shift'],
-      ['holiday', 'Hari Libur', 'holiday']
-    ]
-  },
-  {
-    title: 'LEAVE',
-    items: [
-      ['leave-request', 'Pengajuan Cuti', 'request'],
-      ['leave-balance', 'Saldo Cuti', 'balance']
-    ]
-  },
-  {
-    title: 'PAYROLL',
-    items: [
-      ['payroll', 'Monthly Payroll', 'payroll'],
-      ['production-hr', 'HR Transaction Center', 'settings'],
-      ['payroll-engine', 'Payroll Calculation', 'payroll'],
-      ['payroll-production-v22', 'Payroll Control', 'payroll'],
-      ['payroll-components', 'Salary Components', 'components'],
-      ['payroll-overtime', 'Overtime Payroll', 'arrow'],
-      ['payslip', 'Payslip', 'calendar']
-    ]
-  },
-  {
-    title: 'TALENT',
-    items: [
-      ['performance', 'Performance', 'arrow'],
-      ['kpi', 'KPI & Target', 'kpi'],
-      ['recruitment-v25', 'Recruitment ATS Enterprise', 'recruitment'],
-      ['recruitment', 'Recruitment Legacy', 'recruitment'],
-      ['candidates', 'Kandidat', 'users']
-    ]
-  },
-  {
-    title: 'ENTERPRISE SUITE',
-    items: [
-      ['enterprise-v26', 'Documents & Compliance', 'request'],
-      ['enterprise-v27', 'Performance & KPI', 'kpi'],
-      ['enterprise-v28', 'HR Analytics & BI', 'kpi'],
-      ['enterprise-v29', 'HR Inbox', 'bell'],
-      ['enterprise-v30', 'ESS Enterprise', 'users'],
-      ['enterprise-v31', 'QA & Testing', 'check'],
-      ['enterprise-v32', 'Production Optimization', 'settings'],
-      ['enterprise-v33', 'Multi-Company', 'org'],
-      ['enterprise-v34', 'API & Integrations', 'settings'],
-      ['enterprise-v35', 'AI HR & Automation', 'kpi']
-    ]
-  },
-  {
-    title: 'REPORTING',
-    items: [
-      ['reports', 'Laporan', 'report']
-    ]
-  },
-  {
-    title: 'SYSTEM',
-    items: [
-      ['enterprise-v20', 'Enterprise Command Center', 'org'],
-      ['payroll-indonesia-v23', 'Payroll Indonesia Compliance', 'payroll'],
-      ['security-v21', 'Security Center', 'health'],
-      ['approvals', 'Pusat Persetujuan', 'check'],
-      ['notifications', 'Notifikasi', 'bell'],
-      ['system-health', 'System Health', 'health'],
-      ['settings', 'Pengaturan', 'settings'],
-      ['roles', 'Role & Permission', 'users'],
-      ['audit', 'Audit Log', 'request']
-    ]
-  }
-];
+export default function DashboardAdmin() {
+  const { lang, setLang, t } = useTranslation(); // 't' sekarang dipakai di bawah
 
+  // Tambahkan garis bawah (_open) jika belum dipakai di tampilan, atau biarkan jika mau dipakai
+  const [_open, _setOpen] = useState<Record<string, boolean>>(
+    Object.fromEntries(menuGroupsData?.map(g => [g.title, true]) || [])
+  );
+
+  // menuGroups yang menggunakan fungsi t(...) agar bahasanya ikut berubah & 't' terbaca
+  const menuGroups = [
+    {
+      title: 'UTAMA',
+      items: [
+        ['overview', t('dashboard') || 'Overview', 'home'],
+        ['professional-suite', 'Professional Suite', 'kpi']
+      ]
+    },
+    {
+      title: 'PEOPLE',
+      items: [
+        ['employees', t('employees') || 'Semua Karyawan', 'users'],
+        ['id-card', 'ID Card', 'card'], // Tetap statis sesuai aturan ID card
+        ['employee-360', 'Employee 360°', 'users'],
+        ['employee-add', t('add_employee') || 'Tambah Karyawan', 'plus'],
+        ['organization', 'Organisasi', 'org'],
+        ['hr-operations', 'HR Operations', 'settings']
+      ]
+    },
+    {
+      title: 'ATTENDANCE',
+      items: [
+        ['attendance', 'Rekap Absensi', 'clock'],
+        ['attendance-today', 'Absensi Hari Ini', 'check'],
+        ['late', 'Keterlambatan', 'alert'],
+        ['leave', 'Izin & Sakit', 'leave'],
+        ['overtime', 'Lembur', 'arrow'],
+        ['selfie', 'Monitoring Selfie', 'camera']
+      ]
+    },
+    {
+      title: 'PAYROLL',
+      items: [
+        ['payroll', 'Monthly Payroll', 'payroll'],
+        ['production-hr', 'HR Transaction Center', 'settings'],
+        ['payroll-engine', t('payroll_calc') || 'Payroll Calculation', 'payroll'],
+        ['payroll-production-v22', t('payroll_control') || 'Payroll Control', 'payroll'],
+        ['payroll-components', 'Salary Components', 'components'],
+        ['payroll-overtime', 'Overtime Payroll', 'arrow'],
+        ['payslip', 'Payslip', 'calendar']
+      ]
+    },
+    {
+      title: 'TALENT',
+      items: [
+        ['performance', 'Performance', 'arrow'],
+        ['kpi', 'KPI & Target', 'kpi'],
+        ['recruitment-v25', 'Recruitment ATS Enterprise', 'recruitment'],
+        ['recruitment', 'Recruitment Legacy', 'recruitment'],
+        ['candidates', 'Kandidat', 'users']
+      ]
+    },
+    {
+      title: 'ENTERPRISE SUITE',
+      items: [
+        ['enterprise-v26', 'Documents & Compliance', 'request'],
+        ['enterprise-v27', 'Performance & KPI', 'kpi'],
+        ['enterprise-v28', 'HR Analytics & BI', 'kpi'],
+        ['enterprise-v29', 'HR Inbox', 'bell'],
+        ['enterprise-v30', 'ESS Enterprise', 'users'],
+        ['enterprise-v31', 'QA & Testing', 'check'],
+        ['enterprise-v32', 'Production Optimization', 'settings'],
+        ['enterprise-v33', 'Multi-Company', 'org'],
+        ['enterprise-v34', 'API & Integrations', 'settings'],
+        ['enterprise-v35', 'AI HR & Automation', 'kpi']
+      ]
+    },
+    {
+      title: 'REPORTING',
+      items: [
+        ['reports', 'Laporan', 'report']
+      ]
+    },
+    {
+      title: 'SYSTEM',
+      items: [
+        ['enterprise-v20', 'Enterprise Command Center', 'org'],
+        ['payroll-indonesia-v23', 'Payroll Indonesia Compliance', 'payroll'],
+        ['security-v21', 'Security Center', 'health'],
+        ['approvals', 'Pusat Persetujuan', 'check'],
+        ['notifications', 'Notifikasi', 'bell'],
+        ['system-health', 'System Health', 'health'],
+        ['settings', t('settings') || 'Pengaturan', 'settings'],
+        ['roles', 'Role & Permission', 'users'],
+        ['audit', 'Audit Log', 'request']
+      ]
+    }
+  ];
  const [logged,setLogged]=useState(false),[email,setEmail]=useState(''),[pin,setPin]=useState('');
  const [menu,setMenu]=useState<MenuKey>('overview'),[sidebar,setSidebar]=useState(true);
  const [open,setOpen]=useState<Record<string,boolean>>(Object.fromEntries(menuGroups.map(g=>[g.title,true])));
