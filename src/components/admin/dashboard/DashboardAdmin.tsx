@@ -768,7 +768,7 @@ function Settings(){
     theme.text || '#172033';
 
   const border =
-    theme.border || accent;
+  theme.border || '#e2e7ee';
 
   root.style.setProperty(
     '--mx-primary',
